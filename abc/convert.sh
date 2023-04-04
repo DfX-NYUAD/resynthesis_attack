@@ -7,23 +7,12 @@
 pwd_="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 ## NOTE/TODO these parameters are to be revised to match the setup at your end
-# local (link to) abc binary
-# https://github.com/berkeley-abc/abc.git
-abc=$pwd_/abc
-# lib file
-lib=/home/jk176/old_home/work/Nangate/NangateOpenCellLibrary_typical.lib
+source $pwd_/../settings.sh
 
 ## NOTE fixed parameters; not be revised unless you know what you're doing
 #
 b2v_tcl=$pwd_/convert_b2v.tcl
 v2b_tcl=$pwd_/convert_v2b.tcl
-#
-# NOTE only strings/names, not full paths
-bench_in=design_in.bench
-bench_out=design_out.bench
-verilog_in=design_in.v
-verilog_out=design_out.v
-lib_in=library.lib
 
 ## procedures
 #####
