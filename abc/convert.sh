@@ -84,14 +84,6 @@ if ! [[ $use_semaphore == "y" || $use_semaphore == "n" ]]; then
 	echo "Unknown semaphore handling option: \"$use_semaphore\" -- select either \"y\" or \"n\"."
 	exit 1
 fi
-#
-## NOTE also sanity check on other parameters
-if ! [[ -e $abc ]]; then
-	echo "'abc' binary does not exist; check the provided path: \"$abc\"."
-fi
-if ! [[ -e $lib ]]; then
-	echo "Library files does not exist; check the provided path: \"$lib\"."
-fi
 
 ## derive runtime parameters
 #####
@@ -101,8 +93,9 @@ file_in_wo_path=${file_in##*/}
 file_in_name=${file_in_wo_path%.*}
 # NOTE path name
 file_in_path=${file_in%/*}
-# other derived files; output files
-log_file=$file_in_path/$file_in_name'.'$mode'.log'
+
+# other files; output files in current work dir
+log_file=$file_in_name'.'$mode'.log'
 
 ## dbg
 #echo $file_in_wo_path
@@ -118,7 +111,6 @@ log_file=$file_in_path/$file_in_name'.'$mode'.log'
 if [[ $mode == "b2v" ]]; then
 
 	if [[ $use_semaphore == "y" ]]; then
-		# NOTE semaphore must be based on the generic $bench_in file, not the specific $file_in
 		semaphore_enter b2v
 	fi
 
@@ -127,7 +119,7 @@ if [[ $mode == "b2v" ]]; then
 
 	$abc -f $b2v_tcl | tee $log_file
 
-	file_out=$file_in_path/$file_in_name'.b2v.v'
+	file_out=$file_in_name'.b2v.v'
 	mv $verilog_out $file_out
 
 	unlink $lib_in
@@ -140,7 +132,6 @@ if [[ $mode == "b2v" ]]; then
 # by construction, (i.e., check above) must be v2b
 else
 	if [[ $use_semaphore == "y" ]]; then
-		# NOTE semaphore must be based on the generic $verilog_in file, not the specific $file_in
 		semaphore_enter v2b
 	fi
 
@@ -149,7 +140,7 @@ else
 
 	$abc -f $v2b_tcl | tee $log_file
 
-	file_out=$file_in_path/$file_in_name'.v2b.bench'
+	file_out=$file_in_name'.v2b.bench'
 	mv $bench_out $file_out
 
 	unlink $lib_in
