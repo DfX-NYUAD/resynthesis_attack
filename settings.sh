@@ -10,7 +10,7 @@ abc=/data/projects/abc/abc
 
 # local link to SCOPE folder
 # https://github.com/alaql89/SCOPE
-scope_dir=$pwd__/../SCOPE
+scope_dir=/data/projects/SCOPE
 
 # local link to convert.sh
 convert=$pwd__/abc/convert.sh
