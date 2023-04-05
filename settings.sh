@@ -29,6 +29,9 @@ verilog_in=design_in.v
 bench_out=design_in.v2b.bench
 lib_in=library.lib
 
+# NOTE scale/resolution for floating point computation
+scale_fp=4
+
 ## sanity checks
 #
 if ! [[ -e $abc ]]; then

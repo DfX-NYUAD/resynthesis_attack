@@ -2,6 +2,7 @@
 
 ## settings
 #####
+# TODO put file_in in front of all echo commands, to allow to differentiate multiple parallel runs
 
 # NOTE points to path where this script resides; https://stackoverflow.com/a/246128
 pwd_="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -102,7 +103,7 @@ fi
 # 3) convert bench to verilog
 ##
 echo "---------------------------------------------------------" | tee -a $log_file
-echo "Converting input bench file \"$file_in_wo_path\" to verilog." | tee -a $log_file
+echo "Converting input bench file \"$file_in_wo_path\" to verilog" | tee -a $log_file
 echo "---------------------------------------------------------" | tee -a $log_file
 echo "" | tee -a $log_file
 
@@ -126,14 +127,14 @@ perl $synth -mod=design_in $synth_settings | tee -a $log_file
 
 echo "" | tee -a $log_file
 echo "---------------------------------------------------------" | tee -a $log_file
-echo "Done running resynth script." | tee -a $log_file
+echo "Done running resynth script" | tee -a $log_file
 echo "---------------------------------------------------------" | tee -a $log_file
 echo "" | tee -a $log_file
 
 # 5) prepare SCOPE
 ##
 echo "---------------------------------------------------------" | tee -a $log_file
-echo "Preparing SCOPE: convert all resynth verilog files back to bench, init local SCOPE copy, embedd key into bench files ..." | tee -a $log_file
+echo "Preparing SCOPE: convert all resynth verilog files to bench, etc ..." | tee -a $log_file
 echo "---------------------------------------------------------" | tee -a $log_file
 echo "" | tee -a $log_file
 
@@ -207,7 +208,7 @@ done
 
 echo "" | tee -a ../$log_file
 echo "-------------------------------------------------------" | tee -a ../$log_file
-echo "SCOPE results: extract inferences for each key bit" | tee -a ../$log_file
+echo "SCOPE results: extract all key bit inferences ..." | tee -a ../$log_file
 echo "-------------------------------------------------------" | tee -a ../$log_file
 echo "" | tee -a ../$log_file
 
@@ -222,14 +223,14 @@ for file in attacked_files/design_*_mapped.v2b.bench; do
 	file_=${file_%.*}
 	key_file=extracted_keys/$file_/key_variant_1.txt
 
-	echo "Parsing for \"$file_\" ..."
+	echo "Parsing for \"$key_file\" ..."
 
 	for ((i=1; i<=${#correct_key_string}; i++)); do
 
 		# NOTE mute stderr as the file might not exist in case SCOPE errors out
-		bit=$(head -c $i $key_file 2> /dev/null | tail -c 1)
+		bit_inferred=$(head -c $i $key_file 2> /dev/null | tail -c 1)
 
-		case $bit in
+		case $bit_inferred in
 			0)
 				((key_bits_counts_0[$i] = ${key_bits_counts_0[$i]} + 1))
 			;;
@@ -243,7 +244,7 @@ for file in attacked_files/design_*_mapped.v2b.bench; do
 	done
 done
 
-# NOTE derive final inference, and keep track of both variants
+# derive final inference for both SCOPE key variants
 for ((i=1; i<=${#correct_key_string}; i++)); do
 
 	# simple majority vote, but only among the inferences for 0 and 1, not considering all X inferences
@@ -262,62 +263,142 @@ for ((i=1; i<=${#correct_key_string}; i++)); do
 	fi
 done
 
-# NOTE print results
+# print results
 
 echo "" | tee -a ../$log_file
 echo "-------------------------------------------------------" | tee -a ../$log_file
-echo "SCOPE results: print totals for inferences for each key bit" | tee -a ../$log_file
+echo "SCOPE results: print inferences stats and keys" | tee -a ../$log_file
 echo "-------------------------------------------------------" | tee -a ../$log_file
 echo "" | tee -a ../$log_file
 
-# NOTE print as table using 'column -t'; gather all data/rows first via string concatenation
+# NOTE to print as table using 'column -t', we have to gather all data/rows first via string concatenation
 out=""
 
 # 1st row: header
-out+="Sum_of_inferences\\Key_bit "
+out+="Inference / Key bit	"
 for ((i=1; i<=${#correct_key_string}; i++)); do
-	out+="$i "
+	out+="$i	"
 done
 # end row
 # NOTE see https://stackoverflow.com/a/3182519 for newline handling
 out+=$'\n'
+#
+out+="--------------------------	"
+for ((i=1; i<=${#correct_key_string}; i++)); do
+	out+="---	"
+done
+out+=$'\n'
 
 # following rows: data
-out+="X "
+out+="X	"
 for ((i=1; i<=${#correct_key_string}; i++)); do
-	out+="${key_bits_counts_X[$i]} "
+	out+="${key_bits_counts_X[$i]}	"
 done
 out+=$'\n'
 #
-out+="0 "
+out+="0	"
 for ((i=1; i<=${#correct_key_string}; i++)); do
-	out+="${key_bits_counts_0[$i]} "
+	out+="${key_bits_counts_0[$i]}	"
 done
 out+=$'\n'
 #
-out+="1 "
+out+="1	"
 for ((i=1; i<=${#correct_key_string}; i++)); do
-	out+="${key_bits_counts_1[$i]} "
+	out+="${key_bits_counts_1[$i]}	"
 done
 out+=$'\n'
 #
-out+="Final_variant_1 "
+out+="--------------------------	"
 for ((i=1; i<=${#correct_key_string}; i++)); do
-	out+="${key_bits_inference_variant_1[$i]} "
+	out+="---	"
 done
 out+=$'\n'
 #
-out+="Final_variant_2 "
+out+="Final Inference, Variant 1	"
 for ((i=1; i<=${#correct_key_string}; i++)); do
-	out+="${key_bits_inference_variant_2[$i]} "
+	out+="${key_bits_inference_variant_1[$i]}	"
+done
+out+=$'\n'
+#
+out+="Final Inference, Variant 2	"
+for ((i=1; i<=${#correct_key_string}; i++)); do
+	out+="${key_bits_inference_variant_2[$i]}	"
+done
+out+=$'\n'
+#
+out+="--------------------------	"
+for ((i=1; i<=${#correct_key_string}; i++)); do
+	out+="---	"
+done
+out+=$'\n'
+#
+out+="Correct Key	"
+for ((i=1; i<=${#correct_key_string}; i++)); do
+	out+="$(echo $correct_key_string | head -c $i | tail -c 1)	"
 done
 out+=$'\n'
 
 # print as table
 # NOTE quotes are required here for proper newline handling (https://stackoverflow.com/a/3182519)
-echo "$out" | column -t | tee -a ../$log_file
+echo "$out" | column -t -s "	" -o " | " | tee -a ../$log_file
+echo "" | tee -a ../$log_file
 
-# TODO compute metrics over correct key
+# compute metrics over correct key
+
+key_bits_variant_1__correct=0;
+key_bits_variant_1__X=0;
+key_bits_variant_2__correct=0;
+key_bits_variant_2__X=0;
+
+for ((i=1; i<=${#correct_key_string}; i++)); do
+
+	bit_correct=$(echo $correct_key_string | head -c $i | tail -c 1)
+
+	if [[ ${key_bits_inference_variant_1[$i]} == "X" ]]; then
+		((key_bits_variant_1__X = key_bits_variant_1__X + 1))
+
+	elif [[ ${key_bits_inference_variant_1[$i]} == $bit_correct ]]; then
+		((key_bits_variant_1__correct = key_bits_variant_1__correct + 1))
+	fi
+
+	if [[ ${key_bits_inference_variant_2[$i]} == "X" ]]; then
+		((key_bits_variant_2__X = key_bits_variant_2__X + 1))
+
+	elif [[ ${key_bits_inference_variant_2[$i]} == $bit_correct ]]; then
+		((key_bits_variant_2__correct = key_bits_variant_2__correct + 1))
+	fi
+done
+
+accuracy_variant_1=$(bc -l <<< "scale=$scale_fp; ($key_bits_variant_1__correct / ${#correct_key_string})")
+accuracy_variant_2=$(bc -l <<< "scale=$scale_fp; ($key_bits_variant_2__correct / ${#correct_key_string})")
+precision_variant_1=$(bc -l <<< "scale=$scale_fp; (($key_bits_variant_1__correct + $key_bits_variant_1__X) / ${#correct_key_string})")
+precision_variant_2=$(bc -l <<< "scale=$scale_fp; (($key_bits_variant_2__correct + $key_bits_variant_2__X) / ${#correct_key_string})")
+key_prediction_accuracy_variant_1=$(bc -l <<< "scale=$scale_fp; ($key_bits_variant_1__correct / (${#correct_key_string} - $key_bits_variant_1__X))")
+key_prediction_accuracy_variant_2=$(bc -l <<< "scale=$scale_fp; ($key_bits_variant_2__correct / (${#correct_key_string} - $key_bits_variant_2__X))")
+
+## dbg
+#echo " ($key_bits_variant_1__correct / ${#correct_key_string})"
+#echo " ($key_bits_variant_2__correct / ${#correct_key_string})"
+#echo " (($key_bits_variant_1__correct + $key_bits_variant_1__X) / ${#correct_key_string})"
+#echo " (($key_bits_variant_2__correct + $key_bits_variant_2__X) / ${#correct_key_string})"
+#echo " ($key_bits_variant_1__correct / (${#correct_key_string} - $key_bits_variant_1__X))"
+#echo " ($key_bits_variant_2__correct / (${#correct_key_string} - $key_bits_variant_2__X))"
+
+echo "-------------------------------------------------------" | tee -a ../$log_file
+echo "SCOPE results: final metrics" | tee -a ../$log_file
+echo "-------------------------------------------------------" | tee -a ../$log_file
+echo "" | tee -a ../$log_file
+
+echo " Accuracy (AC), Variant 1 = $accuracy_variant_1" | tee -a ../$log_file
+echo " Precision (PC), Variant 1 = $precision_variant_1" | tee -a ../$log_file
+echo " Key Prediction Accuracy (KPA), Variant 1 = $key_prediction_accuracy_variant_1" | tee -a ../$log_file
+echo "" | tee -a ../$log_file
+echo " Accuracy (AC), Variant 2 = $accuracy_variant_2" | tee -a ../$log_file
+echo " Precision (PC), Variant 2 = $precision_variant_2" | tee -a ../$log_file
+echo " Key Prediction Accuracy (KPA), Variant 2 = $key_prediction_accuracy_variant_2" | tee -a ../$log_file
+echo "" | tee -a ../$log_file
+
+# TODO COPE metric; min, max, avg; to be grepped from $log_file
 
 # return silently back, out of SCOPE dir
 cd - > /dev/null
