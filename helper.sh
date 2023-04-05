@@ -118,46 +118,66 @@ echo "Done running resynth script." | tee -a $log_file
 echo "---------------------------------------------------------" | tee -a $log_file
 echo "" | tee -a $log_file
 
-# 5) convert all resynth designs to bench files
+# 5) prepare SCOPE
 ##
 echo "---------------------------------------------------------" | tee -a $log_file
-echo "Converting all resynth verilog files back to bench." | tee -a $log_file
+echo "Preparing SCOPE: convert all resynth verilog files back to bench, init local SCOPE copy, embedd key into bench files ..." | tee -a $log_file
 echo "---------------------------------------------------------" | tee -a $log_file
 echo "" | tee -a $log_file
 
+# convert resynth verilog to bench
 for file in design_*_mapped.v; do
 	$convert ./$file v2b n
-	file_out=$file_in_name'.v2b.bench'
+done
+
+# carry over correct key from original bench file
+# NOTE by construction, the input file is in the parent folder
+key_string=$(ack "#key=" ../$file_in_wo_path)
+#
+if [[ $key_string != "" ]]; then
+	for file in design_*_mapped.v2b.bench; do
+		sed -i "1i$key_string" $file
+	done
+fi
+
+# init local copy of SCOPE; required to enable parallel processing within different work dirs
+#
+mkdir SCOPE
+#
+mkdir SCOPE/abc_compiler
+ln -sf $abc SCOPE/abc_compiler/
+#
+cp -ra $scope_dir/src SCOPE/
+#
+mkdir SCOPE/attacked_files
+mkdir SCOPE/extracted_keys
+mkdir SCOPE/feature_reports
+mkdir SCOPE/obfus_tests
+
+# link files into SCOPE work dir; must reside in there
+for file in design_*_mapped.v2b.bench; do
+	ln -sf ../../$file SCOPE/attacked_files/
 done
 
 # 6) run SCOPE on all bench files
 ##
 echo "" | tee -a $log_file
 echo "-------------------------------------------------------" | tee -a $log_file
-echo "Running SCOPE attack; this will take some long time ..." | tee -a $log_file
+echo "Running SCOPE attack; this may take some long time ..." | tee -a $log_file
 echo "-------------------------------------------------------" | tee -a $log_file
 echo "" | tee -a $log_file
 
-# cleanup from any prior runs
-rm $scope_dir/attacked_files/*
-rm $scope_dir/attacked_files/.*.swp
-
-# link files into SCOPE work dir; must reside in there
-for file in design_*_mapped.v2b.bench; do
-	ln -s $work_dir_full_path/$file $scope_dir/attacked_files/
-done
-
-# return silently back, out of work dir
+# return silently back, out of work dir; just to put "previous pwd" back onto the "stack"
 cd - > /dev/null
 # jump to SCOPE dir; required for running SCOPE
-cd $scope_dir
+cd $work_dir_full_path/SCOPE
 
 # actual call to scope
-./src/scope | tee -a $work_dir_full_path/$log_file
+./src/scope | tee -a ../$log_file
 
 # 7) parse SCOPE results
 ##
-# TODO
+# TODO parse results, do majority vote for each key bit across all SCOPE runs
 
 # return silently back, out of SCOPE dir
 cd - > /dev/null
