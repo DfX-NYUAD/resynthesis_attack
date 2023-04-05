@@ -184,7 +184,140 @@ cd $work_dir_full_path/SCOPE
 
 # 7) parse SCOPE results
 ##
-# TODO parse results, do majority vote for each key bit across all SCOPE runs
+
+## NOTE associative arrays not really needed, but are more straightforward to handle in bash
+# key: index of key bit, starting from 1; value: count of times this key bit got resolved/inferred to be '0'
+declare -A key_bits_counts_0
+# key: index of key bit, starting from 1; value: count of times this key bit got resolved/inferred to be '1'
+declare -A key_bits_counts_1
+# key: index of key bit, starting from 1; value: count of times this key bit did not got resolved/inferred, meaning it's labelled as 'X'
+declare -A key_bits_counts_X
+# key: index of key bit, starting from 1; value: final inference
+declare -A key_bits_inference_variant_1
+declare -A key_bits_inference_variant_2
+
+# init arrays
+# NOTE no need to init key_bits_inference_variant_* arrays
+for ((i=1; i<=${#correct_key_string}; i++)); do
+
+	key_bits_counts_0[$i]=0
+	key_bits_counts_1[$i]=0
+	key_bits_counts_X[$i]=0
+done
+
+echo "" | tee -a ../$log_file
+echo "-------------------------------------------------------" | tee -a ../$log_file
+echo "SCOPE results: extract inferences for each key bit" | tee -a ../$log_file
+echo "-------------------------------------------------------" | tee -a ../$log_file
+echo "" | tee -a ../$log_file
+
+# extract results files: key_variant_1.txt
+#
+# NOTE there also exists key_variant_2.txt which is the inverse for each and every inferred; this is because SCOPE works by clustering keybits into two groups but cannot tell which
+# group is bit 0 and which bit 1 -- this variant 2 can be covered for the final inference, not needed during parsing
+for file in attacked_files/design_*_mapped.v2b.bench; do
+
+	file_=$file
+	file_=${file_##*/}
+	file_=${file_%.*}
+	key_file=extracted_keys/$file_/key_variant_1.txt
+
+	echo "Parsing for \"$file_\" ..."
+
+	for ((i=1; i<=${#correct_key_string}; i++)); do
+
+		# NOTE mute stderr as the file might not exist in case SCOPE errors out
+		bit=$(head -c $i $key_file 2> /dev/null | tail -c 1)
+
+		case $bit in
+			0)
+				((key_bits_counts_0[$i] = ${key_bits_counts_0[$i]} + 1))
+			;;
+			1)
+				((key_bits_counts_1[$i] = ${key_bits_counts_1[$i]} + 1))
+			;;
+			*)
+				((key_bits_counts_X[$i] = ${key_bits_counts_X[$i]} + 1))
+			;;
+		esac
+	done
+done
+
+# NOTE derive final inference, and keep track of both variants
+for ((i=1; i<=${#correct_key_string}; i++)); do
+
+	# simple majority vote, but only among the inferences for 0 and 1, not considering all X inferences
+	if [[ ${key_bits_counts_0[$i]} -gt ${key_bits_counts_1[$i]} ]]; then
+
+		key_bits_inference_variant_1[$i]=0
+		key_bits_inference_variant_2[$i]=1
+
+	elif [[ ${key_bits_counts_1[$i]} -gt ${key_bits_counts_0[$i]} ]]; then
+
+		key_bits_inference_variant_1[$i]=1
+		key_bits_inference_variant_2[$i]=0
+	else
+		key_bits_inference_variant_1[$i]="X"
+		key_bits_inference_variant_2[$i]="X"
+	fi
+done
+
+# NOTE print results
+
+echo "" | tee -a ../$log_file
+echo "-------------------------------------------------------" | tee -a ../$log_file
+echo "SCOPE results: print totals for inferences for each key bit" | tee -a ../$log_file
+echo "-------------------------------------------------------" | tee -a ../$log_file
+echo "" | tee -a ../$log_file
+
+# NOTE print as table using 'column -t'; gather all data/rows first via string concatenation
+out=""
+
+# 1st row: header
+out+="Sum_of_inferences\\Key_bit "
+for ((i=1; i<=${#correct_key_string}; i++)); do
+	out+="$i "
+done
+# end row
+# NOTE see https://stackoverflow.com/a/3182519 for newline handling
+out+=$'\n'
+
+# following rows: data
+out+="X "
+for ((i=1; i<=${#correct_key_string}; i++)); do
+	out+="${key_bits_counts_X[$i]} "
+done
+out+=$'\n'
+#
+out+="0 "
+for ((i=1; i<=${#correct_key_string}; i++)); do
+	out+="${key_bits_counts_0[$i]} "
+done
+out+=$'\n'
+#
+out+="1 "
+for ((i=1; i<=${#correct_key_string}; i++)); do
+	out+="${key_bits_counts_1[$i]} "
+done
+out+=$'\n'
+#
+out+="Final_variant_1 "
+for ((i=1; i<=${#correct_key_string}; i++)); do
+	out+="${key_bits_inference_variant_1[$i]} "
+done
+out+=$'\n'
+#
+out+="Final_variant_2 "
+for ((i=1; i<=${#correct_key_string}; i++)); do
+	out+="${key_bits_inference_variant_2[$i]} "
+done
+out+=$'\n'
+
+# print as table
+# NOTE quotes are required here for proper newline handling (https://stackoverflow.com/a/3182519)
+echo "$out" | column -t | tee -a ../$log_file
+
+# TODO compute metrics over correct key
 
 # return silently back, out of SCOPE dir
 cd - > /dev/null
