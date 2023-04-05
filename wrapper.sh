@@ -72,6 +72,11 @@ cd $work_dir
 
 work_dir_full_path=$(pwd)
 
+# NOTE before writing to log file, backup any prior log file
+if [[ -e $log_file ]]; then
+	mv $log_file $log_file'.back'
+fi
+
 echo "$file_in > " | tee -a $log_file
 echo "$file_in > ---------------------------------------------------------" | tee -a $log_file
 echo "$file_in > Init and entering work dir: \"$work_dir\"" | tee -a $log_file
@@ -80,23 +85,27 @@ echo "$file_in > " | tee -a $log_file
 
 # 2) backup data of previous runs, if any
 ##
-# NOTE ignore backup folders, and also trigger backup only for >1 files (as the log file is already 1 file)
-if [[ $(ls | grep -v 'backup_' | wc -l) -gt 1 ]]; then
+# NOTE ignore backup folders, and also trigger backup only for >2 files (as the log files are already 2 files present)
+if [[ $(ls | grep -v 'backup_*' | wc -l) -gt 2 ]]; then
 
 	backup_dir=backup_$(date +%s)
-
 	mkdir $backup_dir
 
-	for file in *; do
-		if [[ $file != "backup_"* ]]; then
-			mv $file $backup_dir/
-		fi
-	done
-
 	echo "$file_in > ---------------------------------------------------------" | tee -a $log_file
-	echo "$file_in > Backup prior run data to: \"$work_dir/$backup_dir\"" | tee -a $log_file
+	echo "$file_in > Backup prior run data to: \"$work_dir/$backup_dir\" ..." | tee -a $log_file
 	echo "$file_in > ---------------------------------------------------------" | tee -a $log_file
 	echo "$file_in > " | tee -a $log_file
+
+	for file in *; do
+
+		if [[ $file == "backup_"* ]]; then
+			continue
+		elif [[ $file == $log_file ]]; then
+			continue
+		fi
+
+		mv $file $backup_dir/
+	done
 fi
 
 # 3) convert bench to verilog
