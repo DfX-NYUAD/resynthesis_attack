@@ -52,6 +52,18 @@ log_file=$file_in_name'.log'
 ## main code
 #####
 
+# 0) further init steps, along w/ sanity checks
+##
+
+correct_key_string_bench=$(ack "#key=" $file_in)
+if [[ $correct_key_string_bench == "" ]]; then
+	echo "Input file does not contain a line with the correct key, following the syntax '#key=[...]'; check the provided path: \"$file_in\"."
+	exit 1
+fi
+# extract actual key bits
+# NOTE keep 'correct_key_string_bench' separate as well, since we need to put this line back to converted bench files
+correct_key_string=${correct_key_string_bench#\#key=}
+
 # 1) generate and enter work dir
 ##
 
@@ -131,14 +143,9 @@ for file in design_*_mapped.v; do
 done
 
 # carry over correct key from original bench file
-# NOTE by construction, the input file is in the parent folder
-key_string=$(ack "#key=" ../$file_in_wo_path)
-#
-if [[ $key_string != "" ]]; then
-	for file in design_*_mapped.v2b.bench; do
-		sed -i "1i$key_string" $file
-	done
-fi
+for file in design_*_mapped.v2b.bench; do
+	sed -i "1i$correct_key_string_bench" $file
+done
 
 # init local copy of SCOPE; required to enable parallel processing within different work dirs
 #
