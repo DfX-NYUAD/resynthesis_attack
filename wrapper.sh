@@ -237,7 +237,7 @@ for file in attacked_files/design_*_mapped.v2b.bench; do
 	file_=${file_%.*}
 	key_file=extracted_keys/$file_/key_variant_1.txt
 
-	echo "$file_in > Parsing for \"$key_file\" ..."
+	echo "$file_in > Parsing for \"$key_file\" ..." | tee -a ../$log_file
 
 	for ((i=1; i<=${#correct_key_string}; i++)); do
 
