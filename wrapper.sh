@@ -116,7 +116,7 @@ echo "$file_in > " | tee -a $log_file
 
 # NOTE by construction, the input file is in the parent folder
 # NOTE xargs serves to prepend string to each line of the command output; source https://serverfault.com/a/1004627
-$convert ../$file_in_wo_path b2v n | xargs -L 1 -i echo "$file_in > {}"
+$convert ../$file_in_wo_path b2v n | xargs -L 1 -i echo "$file_in > {}" | tee -a $log_file
 echo "$file_in > " | tee -a $log_file
 
 # 4) run resynth script
@@ -152,7 +152,7 @@ echo "$file_in > " | tee -a $log_file
 for file in design_*_mapped.v; do
 
 	# NOTE xargs serves to prepend string to each line of the command output; source https://serverfault.com/a/1004627
-	$convert ./$file v2b n | xargs -L 1 -i echo "$file_in > {}"
+	$convert ./$file v2b n | xargs -L 1 -i echo "$file_in > {}" | tee -a $log_file
 done
 echo "$file_in > " | tee -a $log_file
 
@@ -192,8 +192,7 @@ cd - > /dev/null
 # jump to SCOPE dir; required for running SCOPE
 cd $work_dir_full_path/SCOPE
 
-# actual call to scope
-#
+# actual call to SCOPE
 # NOTE xargs serves to prepend string to each line of the command output; source https://serverfault.com/a/1004627
 ./src/scope | xargs -L 1 -i echo "$file_in > {}" | tee -a ../$log_file
 echo "$file_in > " | tee -a ../$log_file
@@ -222,7 +221,7 @@ for ((i=1; i<=${#correct_key_string}; i++)); do
 done
 
 echo "$file_in > -------------------------------------------------------" | tee -a ../$log_file
-echo "$file_in > SCOPE results: extract all key bit inferences ..." | tee -a ../$log_file
+echo "$file_in > SCOPE results: extract all key bit inferences for resynth designs ..." | tee -a ../$log_file
 echo "$file_in > -------------------------------------------------------" | tee -a ../$log_file
 echo "$file_in > " | tee -a ../$log_file
 
