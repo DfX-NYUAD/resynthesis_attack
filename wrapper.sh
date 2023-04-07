@@ -177,6 +177,7 @@ mkdir SCOPE/obfus_tests
 
 # link files into SCOPE work dir; must reside in there
 for file in design_*_mapped.v2b.bench; do
+	# NOTE by construction, these files are two levels up from the perspective of the 'attacked_files' folder
 	ln -sf ../../$file SCOPE/attacked_files/
 done
 
@@ -274,8 +275,8 @@ for ((i=1; i<=${#correct_key_string}; i++)); do
 		key_bits_inference_variant_1[$i]=1
 		key_bits_inference_variant_2[$i]=0
 	else
-		key_bits_inference_variant_1[$i]="X"
-		key_bits_inference_variant_2[$i]="X"
+		key_bits_inference_variant_1[$i]='X'
+		key_bits_inference_variant_2[$i]='X'
 	fi
 done
 
@@ -290,14 +291,14 @@ for ((i=1; i<=${#correct_key_string}; i++)); do
 
 	bit_correct=$(echo $correct_key_string | head -c $i | tail -c 1)
 
-	if [[ ${key_bits_inference_variant_1[$i]} == "X" ]]; then
+	if [[ ${key_bits_inference_variant_1[$i]} == 'X' ]]; then
 		((key_bits_variant_1__X = key_bits_variant_1__X + 1))
 
 	elif [[ ${key_bits_inference_variant_1[$i]} == $bit_correct ]]; then
 		((key_bits_variant_1__correct = key_bits_variant_1__correct + 1))
 	fi
 
-	if [[ ${key_bits_inference_variant_2[$i]} == "X" ]]; then
+	if [[ ${key_bits_inference_variant_2[$i]} == 'X' ]]; then
 		((key_bits_variant_2__X = key_bits_variant_2__X + 1))
 
 	elif [[ ${key_bits_inference_variant_2[$i]} == $bit_correct ]]; then
@@ -345,7 +346,7 @@ for cope_curr in $(grep "COPE metric:" ../$log_file | awk '{print $(NF-1)}'); do
 done
 cope_avg=$(bc -l <<< "scale=$scale_fp; ($cope_avg / $cope_count)")
 
-# 9) print results
+# 10) print results
 ##
 
 echo "$file_in > -------------------------------------------------------" | tee -a ../$log_file
@@ -442,6 +443,175 @@ echo "$file_in > " | tee -a ../$log_file
 echo "$file_in >  Min COPE = $cope_min" | tee -a ../$log_file
 echo "$file_in >  Max COPE = $cope_max" | tee -a ../$log_file
 echo "$file_in >  Avg COPE = $cope_avg" | tee -a ../$log_file
+echo "$file_in > " | tee -a ../$log_file
+
+# 10) run SCOPE also for original bench file
+##
+
+# keep all further logs, on purpose, in another log file
+log_file=$file_in_name'.log.forOriginalBench'
+
+echo "$file_in > -------------------------------------------------------" | tee -a ../$log_file
+echo "$file_in > Running SCOPE attack on original bench file ..." | tee -a ../$log_file
+echo "$file_in > -------------------------------------------------------" | tee -a ../$log_file
+echo "$file_in > " | tee -a ../$log_file
+
+# backup attacked_files
+# NOTE is restored right after SCOPE call
+mv attacked_files attacked_files.back
+
+# link bench file for SCOPE
+mkdir attacked_files
+# NOTE by construction, this file is three levels up from the perspective of the 'attacked_files' folder
+ln -sf ../../../$file_in_wo_path attacked_files/
+
+# actual call to SCOPE
+# NOTE xargs serves to prepend string to each line of the command output; source https://serverfault.com/a/1004627
+./src/scope | xargs -L 1 -i echo "$file_in > {}" | tee -a ../$log_file
+echo "$file_in > " | tee -a ../$log_file
+
+# restore attacked_files, along with the reference to this baseline run
+mv attacked_files.back/* attacked_files/
+rmdir attacked_files.back
+
+# 11) parse related SCOPE results and compute metrics
+##
+
+file=attacked_files/$file_in_wo_path
+
+file_=$file
+file_=${file_##*/}
+file_=${file_%.*}
+key_file=extracted_keys/$file_/key_variant_1.txt
+
+key_bits_variant_1__correct=0;
+key_bits_variant_1__X=0;
+key_bits_variant_2__correct=0;
+key_bits_variant_2__X=0;
+
+for ((i=1; i<=${#correct_key_string}; i++)); do
+
+	# NOTE mute stderr as the file might not exist in case SCOPE errors out
+	# NOTE overwrite/reuse the array of inference from majority votes here
+	key_bits_inference_variant_1[$i]=$(head -c $i $key_file 2> /dev/null | tail -c 1)
+
+	if [[ ${key_bits_inference_variant_1[$i]} == 0 ]]; then
+		key_bits_inference_variant_2[$i]=1
+
+	elif [[ ${key_bits_inference_variant_1[$i]} == 1 ]]; then
+		key_bits_inference_variant_2[$i]=0
+
+	# NOTE must by 'X' by definition then
+	else
+		key_bits_inference_variant_2[$i]='X'
+	fi
+
+	bit_correct=$(echo $correct_key_string | head -c $i | tail -c 1)
+
+	if [[ ${key_bits_inference_variant_1[$i]} == 'X' ]]; then
+		((key_bits_variant_1__X = key_bits_variant_1__X + 1))
+
+	elif [[ ${key_bits_inference_variant_1[$i]} == $bit_correct ]]; then
+		((key_bits_variant_1__correct = key_bits_variant_1__correct + 1))
+	fi
+
+	if [[ ${key_bits_inference_variant_2[$i]} == 'X' ]]; then
+		((key_bits_variant_2__X = key_bits_variant_2__X + 1))
+
+	elif [[ ${key_bits_inference_variant_2[$i]} == $bit_correct ]]; then
+		((key_bits_variant_2__correct = key_bits_variant_2__correct + 1))
+	fi
+done
+
+accuracy_variant_1=$(bc -l <<< "scale=$scale_fp; ($key_bits_variant_1__correct / ${#correct_key_string})")
+accuracy_variant_2=$(bc -l <<< "scale=$scale_fp; ($key_bits_variant_2__correct / ${#correct_key_string})")
+precision_variant_1=$(bc -l <<< "scale=$scale_fp; (($key_bits_variant_1__correct + $key_bits_variant_1__X) / ${#correct_key_string})")
+precision_variant_2=$(bc -l <<< "scale=$scale_fp; (($key_bits_variant_2__correct + $key_bits_variant_2__X) / ${#correct_key_string})")
+key_prediction_accuracy_variant_1=$(bc -l <<< "scale=$scale_fp; ($key_bits_variant_1__correct / (${#correct_key_string} - $key_bits_variant_1__X))")
+key_prediction_accuracy_variant_2=$(bc -l <<< "scale=$scale_fp; ($key_bits_variant_2__correct / (${#correct_key_string} - $key_bits_variant_2__X))")
+
+## dbg
+#echo "$file_in >  ($key_bits_variant_1__correct / ${#correct_key_string})"
+#echo "$file_in >  ($key_bits_variant_2__correct / ${#correct_key_string})"
+#echo "$file_in >  (($key_bits_variant_1__correct + $key_bits_variant_1__X) / ${#correct_key_string})"
+#echo "$file_in >  (($key_bits_variant_2__correct + $key_bits_variant_2__X) / ${#correct_key_string})"
+#echo "$file_in >  ($key_bits_variant_1__correct / (${#correct_key_string} - $key_bits_variant_1__X))"
+#echo "$file_in >  ($key_bits_variant_2__correct / (${#correct_key_string} - $key_bits_variant_2__X))"
+
+# also parse COPE metrics from the current log file
+cope_curr=$(grep "COPE metric:" ../$log_file | awk '{print $(NF-1)}' | tail -n 1)
+
+# 12) print related SCOPE results
+##
+
+echo "$file_in > -------------------------------------------------------" | tee -a ../$log_file
+echo "$file_in > SCOPE results on original bench file " | tee -a ../$log_file
+echo "$file_in > -------------------------------------------------------" | tee -a ../$log_file
+echo "$file_in > " | tee -a ../$log_file
+
+# NOTE to print as table using 'column -t', we have to gather all data/rows first via string concatenation
+out=""
+
+# 1st row: header
+out+="$file_in > Inference / Key bit	"
+for ((i=1; i<=${#correct_key_string}; i++)); do
+	out+="$i	"
+done
+# end row
+# NOTE see https://stackoverflow.com/a/3182519 for newline handling
+out+=$'\n'
+#
+out+="$file_in > --------------------------	"
+for ((i=1; i<=${#correct_key_string}; i++)); do
+	out+="---	"
+done
+out+=$'\n'
+
+# following rows: data
+out+="$file_in > Inference, Variant 1	"
+for ((i=1; i<=${#correct_key_string}; i++)); do
+	out+="${key_bits_inference_variant_1[$i]}	"
+done
+out+=$'\n'
+#
+out+="$file_in > Inference, Variant 2	"
+for ((i=1; i<=${#correct_key_string}; i++)); do
+	out+="${key_bits_inference_variant_2[$i]}	"
+done
+out+=$'\n'
+#
+out+="$file_in > --------------------------	"
+for ((i=1; i<=${#correct_key_string}; i++)); do
+	out+="---	"
+done
+out+=$'\n'
+#
+out+="$file_in > Correct Key	"
+for ((i=1; i<=${#correct_key_string}; i++)); do
+	out+="$(echo $correct_key_string | head -c $i | tail -c 1)	"
+done
+out+=$'\n'
+
+# print as full table
+# NOTE quotes are required here for proper newline handling (https://stackoverflow.com/a/3182519)
+echo "$out" | column -t -s "	" -o " | " | tee -a ../$log_file
+echo "$file_in > " | tee -a ../$log_file
+
+# print other metrics
+echo "$file_in > -------------------------------------------------------" | tee -a ../$log_file
+echo "$file_in > SCOPE results on original bench file, final metrics" | tee -a ../$log_file
+echo "$file_in > -------------------------------------------------------" | tee -a ../$log_file
+echo "$file_in > " | tee -a ../$log_file
+
+echo "$file_in >  Accuracy (AC), Variant 1 = $accuracy_variant_1" | tee -a ../$log_file
+echo "$file_in >  Precision (PC), Variant 1 = $precision_variant_1" | tee -a ../$log_file
+echo "$file_in >  Key Prediction Accuracy (KPA), Variant 1 = $key_prediction_accuracy_variant_1" | tee -a ../$log_file
+echo "$file_in > " | tee -a ../$log_file
+echo "$file_in >  Accuracy (AC), Variant 2 = $accuracy_variant_2" | tee -a ../$log_file
+echo "$file_in >  Precision (PC), Variant 2 = $precision_variant_2" | tee -a ../$log_file
+echo "$file_in >  Key Prediction Accuracy (KPA), Variant 2 = $key_prediction_accuracy_variant_2" | tee -a ../$log_file
+echo "$file_in > " | tee -a ../$log_file
+echo "$file_in >  COPE = $cope_curr" | tee -a ../$log_file
 echo "$file_in > " | tee -a ../$log_file
 
 # return silently back, out of SCOPE dir
