@@ -298,6 +298,9 @@ set_clock_uncertainty 14 clk_name
 set_clock_latency 100 clk_name
 set_max_transition $trans_val
 $dc_str
+
+set_pin_activity -activity_type system -pin_types primary_input -duty 0.2 -freq 1.0 -clock related
+
 ### Defining Optimization Settings ###
 
 # Ungroup all the instances manually
