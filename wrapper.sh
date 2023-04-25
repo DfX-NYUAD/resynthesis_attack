@@ -313,6 +313,14 @@ precision_variant_2=$(bc -l <<< "scale=$scale_fp; (($key_bits_variant_2__correct
 key_prediction_accuracy_variant_1=$(bc -l <<< "scale=$scale_fp; ($key_bits_variant_1__correct / (${#correct_key_string} - $key_bits_variant_1__X))")
 key_prediction_accuracy_variant_2=$(bc -l <<< "scale=$scale_fp; ($key_bits_variant_2__correct / (${#correct_key_string} - $key_bits_variant_2__X))")
 
+# sanity checks on KPA
+if [[ $key_prediction_accuracy_variant_1 == "" ]]; then
+	key_prediction_accuracy_variant_1="undefined"
+fi
+if [[ $key_prediction_accuracy_variant_2 == "" ]]; then
+	key_prediction_accuracy_variant_2="undefined"
+fi
+
 ## dbg
 #echo "$file_in >  ($key_bits_variant_1__correct / ${#correct_key_string})"
 #echo "$file_in >  ($key_bits_variant_2__correct / ${#correct_key_string})"
@@ -529,6 +537,14 @@ precision_variant_1=$(bc -l <<< "scale=$scale_fp; (($key_bits_variant_1__correct
 precision_variant_2=$(bc -l <<< "scale=$scale_fp; (($key_bits_variant_2__correct + $key_bits_variant_2__X) / ${#correct_key_string})")
 key_prediction_accuracy_variant_1=$(bc -l <<< "scale=$scale_fp; ($key_bits_variant_1__correct / (${#correct_key_string} - $key_bits_variant_1__X))")
 key_prediction_accuracy_variant_2=$(bc -l <<< "scale=$scale_fp; ($key_bits_variant_2__correct / (${#correct_key_string} - $key_bits_variant_2__X))")
+
+# sanity checks on KPA
+if [[ $key_prediction_accuracy_variant_1 == "" ]]; then
+	key_prediction_accuracy_variant_1="undefined"
+fi
+if [[ $key_prediction_accuracy_variant_2 == "" ]]; then
+	key_prediction_accuracy_variant_2="undefined"
+fi
 
 ## dbg
 #echo "$file_in >  ($key_bits_variant_1__correct / ${#correct_key_string})"
