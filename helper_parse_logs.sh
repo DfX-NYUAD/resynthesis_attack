@@ -17,7 +17,7 @@ progress_bar() {
 if [ $# -lt 1 ]; then
 	echo 'Parameters required:'
 	echo '1) Path for work directory/directories, e.g, RLL/config1/bench_\*/\*.work NOTE: you must escape any * wildcard.'
-	exit
+	exit 1
 fi
 #
 path_in=$1
@@ -74,18 +74,20 @@ for path in $(ls $path_in -d 2> /dev/null); do
 
 	## init
 	#
-	path_id=${path%/*}
+	path_id=$(echo ${path%/*} | sed -e 's/_16/_016/' -e 's/_32/_032/' -e 's/_64/_064/')
+	path_id_=${path%/*}
 	run=${path##*/}
 	run_=${run%.work}
 
 #	# dbg
 #	echo $path_id
+#	echo $path_id_
 #	echo $run
 #	echo $run_
 
 	## resyn results
 	#
-	log_resyn=$path_id/$run/$run_".log"
+	log_resyn=$path_id_/$run/$run_".log"
 
 	resyn_AC_1[$path_id]=$(grep "Accuracy (AC), Variant 1" $log_resyn | awk '{print $NF}')
 	resyn_PC_1[$path_id]=$(grep "Precision (PC), Variant 1" $log_resyn | awk '{print $NF}')
@@ -107,7 +109,7 @@ for path in $(ls $path_in -d 2> /dev/null); do
 
 	## baseline results
 	#
-	log_baseline=$path_id/$run/$run_".log.forOriginalBench"
+	log_baseline=$path_id_/$run/$run_".log.forOriginalBench"
 
 	baseline_AC_1[$path_id]=$(grep "Accuracy (AC), Variant 1" $log_baseline | awk '{print $NF}')
 	baseline_PC_1[$path_id]=$(grep "Precision (PC), Variant 1" $log_baseline | awk '{print $NF}')
@@ -169,7 +171,8 @@ out+=$'\n'
 # following rows: data for all paths
 for path in $(ls $path_in -d 2> /dev/null); do
 
-	path_id=${path%/*}
+	path_id=$(echo ${path%/*} | sed -e 's/_16/_016/' -e 's/_32/_032/' -e 's/_64/_064/')
+
 	out+="$path_id"
 
 	out+=" ${baseline_AC_1[$path_id]}"
