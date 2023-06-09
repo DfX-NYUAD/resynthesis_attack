@@ -1,3 +1,32 @@
+Notes by Johann for this fork:
+
+- This fork provides all wrapper functionalities that were missing initial in the original code: conversion from verilog to bench and vice versa, calls to the SCOPE attack, batch processing of multiple runs, parsing of results, etc.
+- Revise settings.sh for $abc, $scope\_dir, and $lib -- you very likely want to keep the other settings as is
+- Revise also genus\_synth.pl for the library path
+- This fork is tailored for the Nangate 45nm library
+- To use the wrapper for parallel processing, you may run something like this over a large set of bench files
+```
+for file in */*/*.bench; do ../../scripts/wrapper.sh $file & done
+```
+- To keep track of the progress for parallel processing, you may run something like this
+```
+watch "tail -q -n1 */*/*.work/*.summary | grep -v 'Total CPU' | column -t" 
+```
+- If needed, to stop/pause and continue all the parallel processing jobs, you may run something like this
+```
+for job in $(jobs -p); do kill -STOP $job; done
+for job in $(jobs -p); do kill -CONT $job; done
+```
+- If needed, to kill all the parallel processing jobs, you may run something like this
+```
+for job in $(jobs -p); do kill $job; done
+for job in $(ps aux | grep /data/projects/resynth_attack/scripts/genus_synth.pl | grep -v grep | awk '{print $2}'); do kill $job; done
+```
+- Once done, to parse all results into a table, you may run something like this
+```
+../../scripts/helper_parse_logs.sh \*/\*/\*.work
+```
+
 # resynthesis tool
 
 Scripts and other material related to the resynthesis-based attack strategy against logic locking.
