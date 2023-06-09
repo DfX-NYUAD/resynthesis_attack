@@ -4,6 +4,7 @@ Notes by Johann for this fork:
 - Revise settings.sh for $abc, $scope\_dir, and $lib -- you very likely want to keep the other settings as is
 - Revise also genus\_synth.pl for the library path
 - This fork is tailored for the Nangate 45nm library
+- This fork only supports combinational circuits; this is because we use `abc` for verilog/bench conversion which does not work for sequential circuits
 - To use the wrapper for parallel processing, you may run something like this over a large set of bench files
 ```
 for file in */*/*.bench; do ../../scripts/wrapper.sh $file & done
