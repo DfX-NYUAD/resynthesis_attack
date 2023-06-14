@@ -74,32 +74,34 @@ for path in $(ls $path_in -d 2> /dev/null); do
 
 	## init
 	#
-	path_id=$(echo ${path%/*} | sed -e 's/_16/_016/' -e 's/_32/_032/' -e 's/_64/_064/')
-	path_id_=${path%/*}
 	run=${path##*/}
 	run_=${run%.work}
-
-#	# dbg
-#	echo $path_id
-#	echo $path_id_
-#	echo $run
-#	echo $run_
+	path_=${path%/*}
+	path_id=$path_"/"$run_
 
 	## resyn results
 	#
-	log_resyn=$path_id_/$run/$run_".log"
+	log_resyn=$path_/$run/$run_".log"
 
-	resyn_AC_1[$path_id]=$(grep "Accuracy (AC), Variant 1" $log_resyn | awk '{print $NF}')
-	resyn_PC_1[$path_id]=$(grep "Precision (PC), Variant 1" $log_resyn | awk '{print $NF}')
-	resyn_KPA_1[$path_id]=$(grep "Key Prediction Accuracy (KPA), Variant 1" $log_resyn | awk '{print $NF}')
-	resyn_AC_2[$path_id]=$(grep "Accuracy (AC), Variant 2" $log_resyn | awk '{print $NF}')
-	resyn_PC_2[$path_id]=$(grep "Precision (PC), Variant 2" $log_resyn | awk '{print $NF}')
-	resyn_KPA_2[$path_id]=$(grep "Key Prediction Accuracy (KPA), Variant 2" $log_resyn | awk '{print $NF}')
-	resyn_COPE_min[$path_id]=$(grep "Min COPE" $log_resyn | awk '{print $NF}')
-	resyn_COPE_max[$path_id]=$(grep "Max COPE" $log_resyn | awk '{print $NF}')
-	resyn_COPE_avg[$path_id]=$(grep "Avg COPE" $log_resyn | awk '{print $NF}')
+#	# dbg
+#	echo $path_id
+#	echo $run
+#	echo $run_
+#	echo $log_resyn
+#	exit
 
-	# sanity checks on KPA
+	resyn_AC_1[$path_id]=$(grep "Accuracy (AC), Variant 1" $log_resyn 2> /dev/null | awk '{print $NF}')
+	resyn_PC_1[$path_id]=$(grep "Precision (PC), Variant 1" $log_resyn 2> /dev/null | awk '{print $NF}')
+	resyn_KPA_1[$path_id]=$(grep "Key Prediction Accuracy (KPA), Variant 1" $log_resyn 2> /dev/null | awk '{print $NF}')
+	resyn_AC_2[$path_id]=$(grep "Accuracy (AC), Variant 2" $log_resyn 2> /dev/null | awk '{print $NF}')
+	resyn_PC_2[$path_id]=$(grep "Precision (PC), Variant 2" $log_resyn 2> /dev/null | awk '{print $NF}')
+	resyn_KPA_2[$path_id]=$(grep "Key Prediction Accuracy (KPA), Variant 2" $log_resyn 2> /dev/null | awk '{print $NF}')
+	resyn_COPE_min[$path_id]=$(grep "Min COPE" $log_resyn 2> /dev/null | awk '{print $NF}')
+	resyn_COPE_max[$path_id]=$(grep "Max COPE" $log_resyn 2> /dev/null | awk '{print $NF}')
+	resyn_COPE_avg[$path_id]=$(grep "Avg COPE" $log_resyn 2> /dev/null | awk '{print $NF}')
+
+	## sanity checks on KPA
+	#
 	if [[ ${resyn_KPA_1[$path_id]} == "=" ]]; then
 		resyn_KPA_1[$path_id]="undefined"
 	fi
@@ -107,25 +109,70 @@ for path in $(ls $path_in -d 2> /dev/null); do
 		resyn_KPA_2[$path_id]="undefined"
 	fi
 
+	## sanity check on run being present at all and being done or not
+	#
+	if ! [[ -e $log_resyn ]]; then
+		resyn_AC_1[$path_id]="N/A"
+		resyn_PC_1[$path_id]="N/A"
+		resyn_KPA_1[$path_id]="N/A"
+		resyn_AC_2[$path_id]="N/A"
+		resyn_PC_2[$path_id]="N/A"
+		resyn_KPA_2[$path_id]="N/A"
+		resyn_COPE_min[$path_id]="N/A"
+		resyn_COPE_max[$path_id]="N/A"
+		resyn_COPE_avg[$path_id]="N/A"
+
+	elif [[ ${resyn_AC_1[$path_id]} == "" ]]; then
+		resyn_AC_1[$path_id]="ongoing"
+		resyn_PC_1[$path_id]="ongoing"
+		resyn_KPA_1[$path_id]="ongoing"
+		resyn_AC_2[$path_id]="ongoing"
+		resyn_PC_2[$path_id]="ongoing"
+		resyn_KPA_2[$path_id]="ongoing"
+		resyn_COPE_min[$path_id]="ongoing"
+		resyn_COPE_max[$path_id]="ongoing"
+		resyn_COPE_avg[$path_id]="ongoing"
+	fi
+
 	## baseline results
 	#
-	log_baseline=$path_id_/$run/$run_".log.forOriginalBench"
+	log_baseline=$path_/$run/$run_".log.forOriginalBench"
 
-	baseline_AC_1[$path_id]=$(grep "Accuracy (AC), Variant 1" $log_baseline | awk '{print $NF}')
-	baseline_PC_1[$path_id]=$(grep "Precision (PC), Variant 1" $log_baseline | awk '{print $NF}')
-	baseline_KPA_1[$path_id]=$(grep "Key Prediction Accuracy (KPA), Variant 1" $log_baseline | awk '{print $NF}')
-	baseline_AC_2[$path_id]=$(grep "Accuracy (AC), Variant 2" $log_baseline | awk '{print $NF}')
-	baseline_PC_2[$path_id]=$(grep "Precision (PC), Variant 2" $log_baseline | awk '{print $NF}')
-	baseline_KPA_2[$path_id]=$(grep "Key Prediction Accuracy (KPA), Variant 2" $log_baseline | awk '{print $NF}')
+	baseline_AC_1[$path_id]=$(grep "Accuracy (AC), Variant 1" $log_baseline 2> /dev/null | awk '{print $NF}')
+	baseline_PC_1[$path_id]=$(grep "Precision (PC), Variant 1" $log_baseline 2> /dev/null | awk '{print $NF}')
+	baseline_KPA_1[$path_id]=$(grep "Key Prediction Accuracy (KPA), Variant 1" $log_baseline 2> /dev/null | awk '{print $NF}')
+	baseline_AC_2[$path_id]=$(grep "Accuracy (AC), Variant 2" $log_baseline 2> /dev/null | awk '{print $NF}')
+	baseline_PC_2[$path_id]=$(grep "Precision (PC), Variant 2" $log_baseline 2> /dev/null | awk '{print $NF}')
+	baseline_KPA_2[$path_id]=$(grep "Key Prediction Accuracy (KPA), Variant 2" $log_baseline 2> /dev/null | awk '{print $NF}')
 	# NOTE grep for 'COPE = ' explicitly to avoid confusion/mismatch w/ other COPE lines
-	baseline_COPE[$path_id]=$(grep "COPE = " $log_baseline | awk '{print $NF}')
+	baseline_COPE[$path_id]=$(grep "COPE = " $log_baseline 2> /dev/null | awk '{print $NF}')
 
-	# sanity checks on KPA
+	## sanity checks on KPA
+	#
 	if [[ ${baseline_KPA_1[$path_id]} == "=" ]]; then
 		baseline_KPA_1[$path_id]="undefined"
 	fi
 	if [[ ${baseline_KPA_2[$path_id]} == "=" ]]; then
 		baseline_KPA_2[$path_id]="undefined"
+	fi
+
+	if ! [[ -e $log_baseline ]]; then
+		baseline_AC_1[$path_id]="N/A"
+		baseline_PC_1[$path_id]="N/A"
+		baseline_KPA_1[$path_id]="N/A"
+		baseline_AC_2[$path_id]="N/A"
+		baseline_PC_2[$path_id]="N/A"
+		baseline_KPA_2[$path_id]="N/A"
+		baseline_COPE[$path_id]="N/A"
+
+	elif [[ ${baseline_AC_1[$path_id]} == "" ]]; then
+		baseline_AC_1[$path_id]="ongoing"
+		baseline_PC_1[$path_id]="ongoing"
+		baseline_KPA_1[$path_id]="ongoing"
+		baseline_AC_2[$path_id]="ongoing"
+		baseline_PC_2[$path_id]="ongoing"
+		baseline_KPA_2[$path_id]="ongoing"
+		baseline_COPE[$path_id]="ongoing"
 	fi
 
 	## progress bar
@@ -171,7 +218,10 @@ out+=$'\n'
 # following rows: data for all paths
 for path in $(ls $path_in -d 2> /dev/null); do
 
-	path_id=$(echo ${path%/*} | sed -e 's/_16/_016/' -e 's/_32/_032/' -e 's/_64/_064/')
+	run=${path##*/}
+	run_=${run%.work}
+	path_=${path%/*}
+	path_id=$path_"/"$run_
 
 	out+="$path_id"
 
