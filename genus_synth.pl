@@ -640,7 +640,7 @@ sub main_part{
 
   while (1){
 # NOTE JK '-wait' useful for batch processing when all licenses will be utilized
-    $the_cmd = "genus -wait 360 -batch -files " . $tcl_file . " > last_run.log";
+    $the_cmd = "genus -wait 1440 -batch -files " . $tcl_file . " > last_run.log";
     system ($the_cmd);
 
     if (check_normal_exit()){
@@ -729,7 +729,7 @@ sub main_part{
 
         while (1){
 # NOTE JK '-wait' useful for batch processing when all licenses will be utilized
-          $the_cmd = "genus -wait 360 -batch -files " . $tcl_file . " > last_run.log";
+          $the_cmd = "genus -wait 1440 -batch -files " . $tcl_file . " > last_run.log";
           system ($the_cmd);
 
           if (check_normal_exit()){
@@ -812,7 +812,7 @@ sub main_part{
 
       while (1){
 # NOTE JK '-wait' useful for batch processing when all licenses will be utilized
-        $the_cmd = "genus -wait 360 -batch -files " . $tcl_file . " > last_run.log";
+        $the_cmd = "genus -wait 1440 -batch -files " . $tcl_file . " > last_run.log";
         system ($the_cmd);
 
         if (check_normal_exit()){
