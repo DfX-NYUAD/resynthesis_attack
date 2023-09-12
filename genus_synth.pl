@@ -724,7 +724,7 @@ sub main_part{
           $trans_val = 13;
         }
         #Run the design tool
-        print "[INFO] Running with gen.eff $gen_eff map.eff $map_eff opt.eff $opt_eff delay.cons $new_dp_con max.tran $trans_val ... \n";
+	print "[INFO] Running with gen.eff $gen_eff map.eff $map_eff opt.eff $opt_eff delay.cons $delay_cons max.tran $trans_val kdc $key_dc ... \n";
         ($tcl_file, $mapped_file) = generate_synth_tcl($diff_cnt, $gen_eff, $map_eff, $opt_eff, $new_dp_con, $trans_val, $key_dc);
 
         while (1){
