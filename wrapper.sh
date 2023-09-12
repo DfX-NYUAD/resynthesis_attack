@@ -336,10 +336,14 @@ cope_max=0
 cope_count=0
 cope_avg=0
 
-for cope_curr in $(grep "COPE metric:" ../$log_file | awk '{print $(NF-1)}'); do
+for cope_curr_ in $(grep "COPE metric:" ../$log_file | awk '{print $(NF-1)}'); do
 
 	((cope_count = cope_count + 1))
 
+	# converts any scientific notation, as possibly found in SCOPE log, to regular floating point notation used by bc
+	cope_curr=$(printf %."$scale_fp"f $cope_curr_)
+
+	# sum up for avg
 	cope_avg=$(bc -l <<< "scale=$scale_fp; ($cope_avg + $cope_curr)")
 
 	# floating point comparison using bc
