@@ -13,6 +13,11 @@ for file in */*/*.bench; do ../../scripts/wrapper.sh $file & done
 ```
 watch "tail -q -n1 */*/*.work/*.summary | grep -v 'Total CPU' | column -t" 
 ```
+or
+```
+watch "tail -n 6 */$DESIGN.work/$DESIGN.log | grep 'Number of designs generated' | column -t"
+```
+The first command lists the latest number/ID of unique designs found during resynthesis trials, whereas the second command lists the overall resynthesis progress (in multiples of 5 runs).
 - If needed, to stop/pause and continue all the parallel processing jobs, you may run something like this:
 ```
 for job in $(jobs -p); do kill -STOP $job; done
