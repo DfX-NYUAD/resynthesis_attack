@@ -106,7 +106,7 @@ for path in $(ls $path_in -d 2> /dev/null); do
 
 
 	# NOTE total bits is same for resyn and baseline runs; extract just here
-	bits_total[$path_id]=$(grep "Inference / Key bit" $log_resyn 2> /dev/null | awk '{print $(NF-1)}')
+	bits_total[$path_id]=$(grep -A3 "SCOPE results: print inferences stats and keys" $log_resyn 2> /dev/null | tail -n1 | awk '{print $(NF-1)}')
 
 	resyn_bits_corr_1[$path_id]=$(grep "# Correctly inferred key bits, Variant 1" $log_resyn 2> /dev/null | awk '{print $NF}')
 	resyn_bits_incorr_1[$path_id]=$(grep "# Incorrectly resolved key bits, Variant 1" $log_resyn 2> /dev/null | awk '{print $NF}')
