@@ -43,6 +43,14 @@ done
 #
 ## key: path id, that is path w/o last part on '*.work'; value: metric related to array name
 #
+declare -A bits_total
+#
+declare -A resyn_bits_corr_1
+declare -A resyn_bits_incorr_1
+declare -A resyn_bits_unres_1
+declare -A resyn_bits_corr_2
+declare -A resyn_bits_incorr_2
+declare -A resyn_bits_unres_2
 declare -A resyn_AC_1
 declare -A resyn_AC_2
 declare -A resyn_PC_1
@@ -53,6 +61,12 @@ declare -A resyn_COPE_min
 declare -A resyn_COPE_max
 declare -A resyn_COPE_avg
 #
+declare -A baseline_bits_corr_1
+declare -A baseline_bits_incorr_1
+declare -A baseline_bits_unres_1
+declare -A baseline_bits_corr_2
+declare -A baseline_bits_incorr_2
+declare -A baseline_bits_unres_2
 declare -A baseline_AC_1
 declare -A baseline_AC_2
 declare -A baseline_PC_1
@@ -90,9 +104,19 @@ for path in $(ls $path_in -d 2> /dev/null); do
 #	echo $log_resyn
 #	exit
 
+
+	# NOTE total bits is same for resyn and baseline runs; extract just here
+	bits_total[$path_id]=$(grep "Inference / Key bit" $log_resyn 2> /dev/null | awk '{print $(NF-1)}')
+
+	resyn_bits_corr_1[$path_id]=$(grep "# Correctly inferred key bits, Variant 1" $log_resyn 2> /dev/null | awk '{print $NF}')
+	resyn_bits_incorr_1[$path_id]=$(grep "# Incorrectly resolved key bits, Variant 1" $log_resyn 2> /dev/null | awk '{print $NF}')
+	resyn_bits_unres_1[$path_id]=$(grep "# Unresolved key bits, Variant 1" $log_resyn 2> /dev/null | awk '{print $NF}')
 	resyn_AC_1[$path_id]=$(grep "Accuracy (AC), Variant 1" $log_resyn 2> /dev/null | awk '{print $NF}')
 	resyn_PC_1[$path_id]=$(grep "Precision (PC), Variant 1" $log_resyn 2> /dev/null | awk '{print $NF}')
 	resyn_KPA_1[$path_id]=$(grep "Key Prediction Accuracy (KPA), Variant 1" $log_resyn 2> /dev/null | awk '{print $NF}')
+	resyn_bits_corr_2[$path_id]=$(grep "# Correctly inferred key bits, Variant 2" $log_resyn 2> /dev/null | awk '{print $NF}')
+	resyn_bits_incorr_2[$path_id]=$(grep "# Incorrectly resolved key bits, Variant 2" $log_resyn 2> /dev/null | awk '{print $NF}')
+	resyn_bits_unres_2[$path_id]=$(grep "# Unresolved key bits, Variant 2" $log_resyn 2> /dev/null | awk '{print $NF}')
 	resyn_AC_2[$path_id]=$(grep "Accuracy (AC), Variant 2" $log_resyn 2> /dev/null | awk '{print $NF}')
 	resyn_PC_2[$path_id]=$(grep "Precision (PC), Variant 2" $log_resyn 2> /dev/null | awk '{print $NF}')
 	resyn_KPA_2[$path_id]=$(grep "Key Prediction Accuracy (KPA), Variant 2" $log_resyn 2> /dev/null | awk '{print $NF}')
@@ -112,9 +136,16 @@ for path in $(ls $path_in -d 2> /dev/null); do
 	## sanity check on run being present at all and being done or not
 	#
 	if ! [[ -e $log_resyn ]]; then
+		bits_total[$path_id]="N/A"
+		resyn_bits_corr_1[$path_id]="N/A"
+		resyn_bits_incorr_1[$path_id]="N/A"
+		resyn_bits_unres_1[$path_id]="N/A"
 		resyn_AC_1[$path_id]="N/A"
 		resyn_PC_1[$path_id]="N/A"
 		resyn_KPA_1[$path_id]="N/A"
+		resyn_bits_corr_2[$path_id]="N/A"
+		resyn_bits_incorr_2[$path_id]="N/A"
+		resyn_bits_unres_2[$path_id]="N/A"
 		resyn_AC_2[$path_id]="N/A"
 		resyn_PC_2[$path_id]="N/A"
 		resyn_KPA_2[$path_id]="N/A"
@@ -123,9 +154,16 @@ for path in $(ls $path_in -d 2> /dev/null); do
 		resyn_COPE_avg[$path_id]="N/A"
 
 	elif [[ ${resyn_AC_1[$path_id]} == "" ]]; then
+		bits_total[$path_id]="ongoing"
+		resyn_bits_corr_1[$path_id]="ongoing"
+		resyn_bits_incorr_1[$path_id]="ongoing"
+		resyn_bits_unres_1[$path_id]="ongoing"
 		resyn_AC_1[$path_id]="ongoing"
 		resyn_PC_1[$path_id]="ongoing"
 		resyn_KPA_1[$path_id]="ongoing"
+		resyn_bits_corr_2[$path_id]="ongoing"
+		resyn_bits_incorr_2[$path_id]="ongoing"
+		resyn_bits_unres_2[$path_id]="ongoing"
 		resyn_AC_2[$path_id]="ongoing"
 		resyn_PC_2[$path_id]="ongoing"
 		resyn_KPA_2[$path_id]="ongoing"
@@ -138,9 +176,15 @@ for path in $(ls $path_in -d 2> /dev/null); do
 	#
 	log_baseline=$path_/$run/$run_".log.forOriginalBench"
 
+	baseline_bits_corr_1[$path_id]=$(grep "# Correctly inferred key bits, Variant 1" $log_baseline 2> /dev/null | awk '{print $NF}')
+	baseline_bits_incorr_1[$path_id]=$(grep "# Incorrectly resolved key bits, Variant 1" $log_baseline 2> /dev/null | awk '{print $NF}')
+	baseline_bits_unres_1[$path_id]=$(grep "# Unresolved key bits, Variant 1" $log_baseline 2> /dev/null | awk '{print $NF}')
 	baseline_AC_1[$path_id]=$(grep "Accuracy (AC), Variant 1" $log_baseline 2> /dev/null | awk '{print $NF}')
 	baseline_PC_1[$path_id]=$(grep "Precision (PC), Variant 1" $log_baseline 2> /dev/null | awk '{print $NF}')
 	baseline_KPA_1[$path_id]=$(grep "Key Prediction Accuracy (KPA), Variant 1" $log_baseline 2> /dev/null | awk '{print $NF}')
+	baseline_bits_corr_2[$path_id]=$(grep "# Correctly inferred key bits, Variant 2" $log_baseline 2> /dev/null | awk '{print $NF}')
+	baseline_bits_incorr_2[$path_id]=$(grep "# Incorrectly resolved key bits, Variant 2" $log_baseline 2> /dev/null | awk '{print $NF}')
+	baseline_bits_unres_2[$path_id]=$(grep "# Unresolved key bits, Variant 2" $log_baseline 2> /dev/null | awk '{print $NF}')
 	baseline_AC_2[$path_id]=$(grep "Accuracy (AC), Variant 2" $log_baseline 2> /dev/null | awk '{print $NF}')
 	baseline_PC_2[$path_id]=$(grep "Precision (PC), Variant 2" $log_baseline 2> /dev/null | awk '{print $NF}')
 	baseline_KPA_2[$path_id]=$(grep "Key Prediction Accuracy (KPA), Variant 2" $log_baseline 2> /dev/null | awk '{print $NF}')
@@ -157,18 +201,30 @@ for path in $(ls $path_in -d 2> /dev/null); do
 	fi
 
 	if ! [[ -e $log_baseline ]]; then
+		baseline_bits_corr_1[$path_id]="N/A"
+		baseline_bits_incorr_1[$path_id]="N/A"
+		baseline_bits_unres_1[$path_id]="N/A"
 		baseline_AC_1[$path_id]="N/A"
 		baseline_PC_1[$path_id]="N/A"
 		baseline_KPA_1[$path_id]="N/A"
+		baseline_bits_corr_2[$path_id]="N/A"
+		baseline_bits_incorr_2[$path_id]="N/A"
+		baseline_bits_unres_2[$path_id]="N/A"
 		baseline_AC_2[$path_id]="N/A"
 		baseline_PC_2[$path_id]="N/A"
 		baseline_KPA_2[$path_id]="N/A"
 		baseline_COPE[$path_id]="N/A"
 
 	elif [[ ${baseline_AC_1[$path_id]} == "" ]]; then
+		baseline_bits_corr_1[$path_id]="ongoing"
+		baseline_bits_incorr_1[$path_id]="ongoing"
+		baseline_bits_unres_1[$path_id]="ongoing"
 		baseline_AC_1[$path_id]="ongoing"
 		baseline_PC_1[$path_id]="ongoing"
 		baseline_KPA_1[$path_id]="ongoing"
+		baseline_bits_corr_2[$path_id]="ongoing"
+		baseline_bits_incorr_2[$path_id]="ongoing"
+		baseline_bits_unres_2[$path_id]="ongoing"
 		baseline_AC_2[$path_id]="ongoing"
 		baseline_PC_2[$path_id]="ongoing"
 		baseline_KPA_2[$path_id]="ongoing"
@@ -195,16 +251,20 @@ out=""
 
 # 1st row: header
 out+="Design"
-out+=" Baseline_AC_1"
-out+=" Baseline_PC_1"
-out+=" Baseline_KPA_1"
-out+=" Baseline_AC_2"
-out+=" Baseline_PC_2"
-out+=" Baseline_KPA_2"
-out+=" Baseline_COPE"
+out+=" Basel_Bits_1"
+out+=" Basel_AC_1"
+out+=" Basel_PC_1"
+out+=" Basel_KPA_1"
+out+=" Basel_Bits_2"
+out+=" Basel_AC_2"
+out+=" Basel_PC_2"
+out+=" Basel_KPA_2"
+out+=" Basel_COPE"
+out+=" Resyn_Bits_1"
 out+=" Resyn_AC_1"
 out+=" Resyn_PC_1"
 out+=" Resyn_KPA_1"
+out+=" Resyn_Bits_2"
 out+=" Resyn_AC_2"
 out+=" Resyn_PC_2"
 out+=" Resyn_KPA_2"
@@ -225,21 +285,56 @@ for path in $(ls $path_in -d 2> /dev/null); do
 
 	out+="$path_id"
 
+	out+=" ${baseline_bits_corr_1[$path_id]}"
+	out+="/${baseline_bits_incorr_1[$path_id]}"
+	out+="/${baseline_bits_unres_1[$path_id]}"
+	out+="/${bits_total[$path_id]}"
+
 	out+=" ${baseline_AC_1[$path_id]}"
+
 	out+=" ${baseline_PC_1[$path_id]}"
+
 	out+=" ${baseline_KPA_1[$path_id]}"
+
+	out+=" ${baseline_bits_corr_2[$path_id]}"
+	out+="/${baseline_bits_incorr_2[$path_id]}"
+	out+="/${baseline_bits_unres_2[$path_id]}"
+	out+="/${bits_total[$path_id]}"
+
 	out+=" ${baseline_AC_2[$path_id]}"
+
 	out+=" ${baseline_PC_2[$path_id]}"
+
 	out+=" ${baseline_KPA_2[$path_id]}"
+
 	out+=" ${baseline_COPE[$path_id]}"
+
+	out+=" ${resyn_bits_corr_1[$path_id]}"
+	out+="/${resyn_bits_incorr_1[$path_id]}"
+	out+="/${resyn_bits_unres_1[$path_id]}"
+	out+="/${bits_total[$path_id]}"
+
 	out+=" ${resyn_AC_1[$path_id]}"
+
 	out+=" ${resyn_PC_1[$path_id]}"
+
 	out+=" ${resyn_KPA_1[$path_id]}"
+
+	out+=" ${resyn_bits_corr_2[$path_id]}"
+	out+="/${resyn_bits_incorr_2[$path_id]}"
+	out+="/${resyn_bits_unres_2[$path_id]}"
+	out+="/${bits_total[$path_id]}"
+
 	out+=" ${resyn_AC_2[$path_id]}"
+
 	out+=" ${resyn_PC_2[$path_id]}"
+
 	out+=" ${resyn_KPA_2[$path_id]}"
+
 	out+=" ${resyn_COPE_min[$path_id]}"
+
 	out+=" ${resyn_COPE_max[$path_id]}"
+
 	out+=" ${resyn_COPE_avg[$path_id]}"
 
 	out+=$'\n'
