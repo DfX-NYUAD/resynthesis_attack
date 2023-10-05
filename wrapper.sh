@@ -283,8 +283,10 @@ done
 # 9) compute SCOPE metrics
 
 key_bits_variant_1__correct=0;
+key_bits_variant_1__incorrect=0;
 key_bits_variant_1__X=0;
 key_bits_variant_2__correct=0;
+key_bits_variant_2__incorrect=0;
 key_bits_variant_2__X=0;
 
 for ((i=1; i<=${#correct_key_string}; i++)); do
@@ -296,6 +298,8 @@ for ((i=1; i<=${#correct_key_string}; i++)); do
 
 	elif [[ ${key_bits_inference_variant_1[$i]} == $bit_correct ]]; then
 		((key_bits_variant_1__correct = key_bits_variant_1__correct + 1))
+	else
+		((key_bits_variant_1__incorrect = key_bits_variant_1__incorrect + 1))
 	fi
 
 	if [[ ${key_bits_inference_variant_2[$i]} == 'X' ]]; then
@@ -303,6 +307,8 @@ for ((i=1; i<=${#correct_key_string}; i++)); do
 
 	elif [[ ${key_bits_inference_variant_2[$i]} == $bit_correct ]]; then
 		((key_bits_variant_2__correct = key_bits_variant_2__correct + 1))
+	else
+		((key_bits_variant_2__incorrect = key_bits_variant_2__incorrect + 1))
 	fi
 done
 
@@ -444,10 +450,16 @@ echo "$file_in > SCOPE results: final metrics" | tee -a ../$log_file
 echo "$file_in > -------------------------------------------------------" | tee -a ../$log_file
 echo "$file_in > " | tee -a ../$log_file
 
+echo "$file_in >  # Correctly inferred key bits, Variant 1 = $key_bits_variant_1__correct" | tee -a ../$log_file
+echo "$file_in >  # Incorrectly resolved key bits, Variant 1 = $key_bits_variant_1__incorrect" | tee -a ../$log_file
+echo "$file_in >  # Unresolved key bits, Variant 1 = $key_bits_variant_1__X" | tee -a ../$log_file
 echo "$file_in >  Accuracy (AC), Variant 1 = $accuracy_variant_1" | tee -a ../$log_file
 echo "$file_in >  Precision (PC), Variant 1 = $precision_variant_1" | tee -a ../$log_file
 echo "$file_in >  Key Prediction Accuracy (KPA), Variant 1 = $key_prediction_accuracy_variant_1" | tee -a ../$log_file
 echo "$file_in > " | tee -a ../$log_file
+echo "$file_in >  # Correctly inferred key bits, Variant 2 = $key_bits_variant_2__correct" | tee -a ../$log_file
+echo "$file_in >  # Incorrectly resolved key bits, Variant 2 = $key_bits_variant_2__incorrect" | tee -a ../$log_file
+echo "$file_in >  # Unresolved key bits, Variant 2 = $key_bits_variant_2__X" | tee -a ../$log_file
 echo "$file_in >  Accuracy (AC), Variant 2 = $accuracy_variant_2" | tee -a ../$log_file
 echo "$file_in >  Precision (PC), Variant 2 = $precision_variant_2" | tee -a ../$log_file
 echo "$file_in >  Key Prediction Accuracy (KPA), Variant 2 = $key_prediction_accuracy_variant_2" | tee -a ../$log_file
@@ -497,8 +509,10 @@ file_=${file_%.*}
 key_file=extracted_keys/$file_/key_variant_1.txt
 
 key_bits_variant_1__correct=0;
+key_bits_variant_1__incorrect=0;
 key_bits_variant_1__X=0;
 key_bits_variant_2__correct=0;
+key_bits_variant_2__incorrect=0;
 key_bits_variant_2__X=0;
 
 for ((i=1; i<=${#correct_key_string}; i++)); do
@@ -525,6 +539,8 @@ for ((i=1; i<=${#correct_key_string}; i++)); do
 
 	elif [[ ${key_bits_inference_variant_1[$i]} == $bit_correct ]]; then
 		((key_bits_variant_1__correct = key_bits_variant_1__correct + 1))
+	else
+		((key_bits_variant_1__incorrect = key_bits_variant_1__incorrect + 1))
 	fi
 
 	if [[ ${key_bits_inference_variant_2[$i]} == 'X' ]]; then
@@ -532,6 +548,8 @@ for ((i=1; i<=${#correct_key_string}; i++)); do
 
 	elif [[ ${key_bits_inference_variant_2[$i]} == $bit_correct ]]; then
 		((key_bits_variant_2__correct = key_bits_variant_2__correct + 1))
+	else
+		((key_bits_variant_2__incorrect = key_bits_variant_2__incorrect + 1))
 	fi
 done
 
@@ -623,10 +641,16 @@ echo "$file_in > SCOPE results on original bench file, final metrics" | tee -a .
 echo "$file_in > -------------------------------------------------------" | tee -a ../$log_file
 echo "$file_in > " | tee -a ../$log_file
 
+echo "$file_in >  # Correctly inferred key bits, Variant 1 = $key_bits_variant_1__correct" | tee -a ../$log_file
+echo "$file_in >  # Incorrectly resolved key bits, Variant 1 = $key_bits_variant_1__incorrect" | tee -a ../$log_file
+echo "$file_in >  # Unresolved key bits, Variant 1 = $key_bits_variant_1__X" | tee -a ../$log_file
 echo "$file_in >  Accuracy (AC), Variant 1 = $accuracy_variant_1" | tee -a ../$log_file
 echo "$file_in >  Precision (PC), Variant 1 = $precision_variant_1" | tee -a ../$log_file
 echo "$file_in >  Key Prediction Accuracy (KPA), Variant 1 = $key_prediction_accuracy_variant_1" | tee -a ../$log_file
 echo "$file_in > " | tee -a ../$log_file
+echo "$file_in >  # Correctly inferred key bits, Variant 2 = $key_bits_variant_2__correct" | tee -a ../$log_file
+echo "$file_in >  # Incorrectly resolved key bits, Variant 2 = $key_bits_variant_2__incorrect" | tee -a ../$log_file
+echo "$file_in >  # Unresolved key bits, Variant 2 = $key_bits_variant_2__X" | tee -a ../$log_file
 echo "$file_in >  Accuracy (AC), Variant 2 = $accuracy_variant_2" | tee -a ../$log_file
 echo "$file_in >  Precision (PC), Variant 2 = $precision_variant_2" | tee -a ../$log_file
 echo "$file_in >  Key Prediction Accuracy (KPA), Variant 2 = $key_prediction_accuracy_variant_2" | tee -a ../$log_file
