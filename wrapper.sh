@@ -347,6 +347,7 @@ for cope_curr_ in $(grep "COPE metric:" ../$log_file | awk '{print $(NF-1)}'); d
 	((cope_count = cope_count + 1))
 
 	# converts any scientific notation, as possibly found in SCOPE log, to regular floating point notation used by bc
+	# also maps/assigns to scale_fp
 	cope_curr=$(printf %."$scale_fp"f $cope_curr_)
 
 	# sum up for avg
@@ -577,7 +578,11 @@ fi
 #echo "$file_in >  ($key_bits_variant_2__correct / (${#correct_key_string} - $key_bits_variant_2__X))"
 
 # also parse COPE metrics from the current log file
-cope_curr=$(grep "COPE metric:" ../$log_file | awk '{print $(NF-1)}' | tail -n 1)
+cope_curr_=$(grep "COPE metric:" ../$log_file | awk '{print $(NF-1)}' | tail -n 1)
+
+# converts any scientific notation, as possibly found in SCOPE log, to regular floating point notation used by bc
+# also maps/assigns to scale_fp
+cope_curr=$(printf %."$scale_fp"f $cope_curr_)
 
 # 12) print related SCOPE results
 ##
