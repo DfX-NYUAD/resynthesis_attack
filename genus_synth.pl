@@ -267,7 +267,7 @@ set_db super_thread_servers "localhost"
 ### Using the libraries ###
 
 # To set the library search path and library file
-set_db init_lib_search_path /home/jk176/old_home/work/Nangate/
+set_db init_lib_search_path /data/projects/resynth_attack/data/
 set_db library NangateOpenCellLibrary_typical.lib
 
 # To set the script search path

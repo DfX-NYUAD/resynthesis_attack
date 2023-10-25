@@ -20,7 +20,8 @@ synth=$pwd__/genus_synth.pl
 synth_settings="-ldd -crl=5 -auto -dux"
 
 # lib file
-lib=/home/jk176/old_home/work/Nangate/NangateOpenCellLibrary_typical.lib
+#lib=/home/jk176/old_home/work/Nangate/NangateOpenCellLibrary_typical.lib
+lib=/data/projects/resynth_attack/data/NangateOpenCellLibrary_typical.lib
 
 # NOTE only strings/names, not full paths; this is on purpose
 bench_in=design_in.bench
